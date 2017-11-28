@@ -1,34 +1,40 @@
 <?php
 	session_start();
-	
-	require_once('authenticate.php');
-	require_once('database.php');
-	
+
+	//require_once('authenticate.php');
+
+	$db = new mysqli('classroom.cs.unc.edu', 'rarora9', 'tjGHkxWAG0AIv492', 'rarora9db');
+
+	if($db->connect_errno > 0) {
+    	die('Unable to connect to database [' . $db->connect_error . ']');
+	}
+
 	$drugs = $db->query("SELECT * FROM drug");
-	$currentDrug = $drugs->fetch_row();
+	$currentRow = $drugs->fetch_row();
 	$response = array();
-	
-	while($currentDrug) {
-		$id = $currentDrug[0];
-		$name = $currentDrug[1];
-		$isInhalable = $currentDrug[2];
-		$category = $currentDrug[3];
+
+	while($currentRow) {
+		$id = $currentRow[0];
+		$name = $currentRow[1];
+		$isInhalable = $currentRow[2];
+		$category = $currentRow[3];
 		$extraInfo;
-		
-		if($isInhalable) {
-			$inhalable = $db->query("SELECT * FROM inhalable WHERE drug_id =" . $id)->fetch_row();
-			$extraInfo = array('costPerMl' => $inhalable[1], 'constant' => $inhalable[2]);
-		} else {
+
+		if($isInhalable == "0") {
 			$nonInhalable = $db->query("SELECT * FROM non_inhalable WHERE drug_id =" . $id)->fetch_row();
 			$extraInfo = array('unitCost' => $nonInhalable[1]);
+		} else {
+			$inhalable = $db->query("SELECT * FROM inhalable WHERE drug_id =" . $id)->fetch_row();
+			$extraInfo = array('costPerMl' => $inhalable[1], 'constant' => $inhalable[2]);
 		}
-		
-		$drug = array('id' => $id, 'name' => $name, 'isInhalable' => $isInhalable, 'category' => $category);
-		$drug += $extraInfo;
-		array_push($response, $drug);
-		$currentDrug = $drugs->fetch_row();
+
+		$tempRow = array('id' => $currentRow[0], 'name' => $currentRow[1], 'isInhalable' => $currentRow[2], 'category' => $currentRow[3]);
+		$tempRow += $extraInfo;
+
+		array_push($response, $tempRow);
+		$currentRow = $drugs->fetch_row();
 	}
-	
+
 	header("Content-type:application/json");
 	print(json_encode($response));
 	exit();

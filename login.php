@@ -1,7 +1,11 @@
 <?php
 	session_start();
 	
-	require_once('database.php');
+	$db = new mysqli('classroom.cs.unc.edu', 'rarora9', 'tjGHkxWAG0AIv492', 'rarora9db');
+			
+	if($db->connect_errno > 0) {
+    	die('Unable to connect to database [' . $db->connect_error . ']');
+	}
 	
 	function login($username, $password) {
 		$num = $GLOBALS['db']->query("SELECT * FROM doctor WHERE username = '" . $username . "'")->num_rows;
@@ -26,7 +30,7 @@
 	if(login($username, $password)) {
 		header('Content-type:application/json');
 		
-		//generate authorization cookie
+		// Generate authorization cookie
 		$_SESSION['username'] = $username;
 		$_SESSION['authsalt'] = time();
 		
@@ -35,12 +39,13 @@
 		setcookie('ANESTHETIC_COSTS_AUTH', $auth_cookie_val, 0, '/', '.cs.unc.edu', true);
 		
 		print(json_encode(true));
+		
 	} else {
 		unset($_SESSION['username']);
 		unset($_SESSION['authsalt']);
 		
 		header('HTTP/1.1 401 Unauthorized');
-		header('Content-type:application/json');
+		header('Content-type: application/json');
 		print(json_encode(false));
 	}
 ?>
